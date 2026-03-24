@@ -80,7 +80,28 @@ GoRouter createRouter(AuthNotifier authNotifier) {
           if (match != null) {
             final itemId = match.group(1)!;
             final exists = CatalogItem.samples.any((e) => e.id == itemId);
-            if (!exists) return const Block.stop();
+            if (!exists) {
+              return Block.then(() {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final navContext =
+                      router.routerDelegate.navigatorKey.currentContext;
+                  if (navContext == null || !navContext.mounted) return;
+                  showDialog<void>(
+                    context: navContext,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('Not found'),
+                      content: Text('No item with ID "$itemId" exists.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                });
+              });
+            }
           }
           return const Allow();
         },
