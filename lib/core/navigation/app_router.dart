@@ -64,9 +64,9 @@ GoRouter createRouter(AuthNotifier authNotifier) {
 
     // Feature #18: onEnter (go_router v17)
     // Intercepts every navigation attempt BEFORE route resolution.
-    // Returning Allow() lets navigation proceed.
-    // Here we just log the event; you can also return Block.then(callback)
-    // to guard routes or perform async checks.
+    // Returning Allow() lets navigation proceed; Block.stop() cancels it,
+    // leaving the user on the current page without any redirect.
+    // Here we also guard /catalog/:id — unknown IDs are blocked in-place.
     onEnter:
         (
           BuildContext context,
@@ -75,6 +75,13 @@ GoRouter createRouter(AuthNotifier authNotifier) {
           GoRouter router,
         ) {
           AppNavigatorObserver.addOnEnterEvent('${current.uri} → ${next.uri}');
+          final catalogItemPattern = RegExp(r'^/catalog/([^/]+)$');
+          final match = catalogItemPattern.firstMatch(next.uri.path);
+          if (match != null) {
+            final itemId = match.group(1)!;
+            final exists = CatalogItem.samples.any((e) => e.id == itemId);
+            if (!exists) return const Block.stop();
+          }
           return const Allow();
         },
 
@@ -178,12 +185,6 @@ GoRouter createRouter(AuthNotifier authNotifier) {
                   GoRoute(
                     path: ':id',
                     name: RouteNames.catalogItem,
-                    redirect: (context, state) {
-                      final itemId = state.pathParameters['id']!;
-                      final exists = CatalogItem.samples
-                          .any((item) => item.id == itemId);
-                      return exists ? null : '/catalog';
-                    },
                     builder: (context, state) {
                       final itemId = state.pathParameters['id']!;
                       final item =
