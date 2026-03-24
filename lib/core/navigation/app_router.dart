@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -177,12 +178,22 @@ GoRouter createRouter(AuthNotifier authNotifier) {
                   GoRoute(
                     path: ':id',
                     name: RouteNames.catalogItem,
-                    builder: (context, state) => CatalogItemScreen(
-                      itemId: state.pathParameters['id']!,
-                      // Feature #8: Cast state.extra to the expected type.
-                      // extra is null when navigating via direct URL (deep link).
-                      item: state.extra as CatalogItem?,
-                    ),
+                    redirect: (context, state) {
+                      final itemId = state.pathParameters['id']!;
+                      final exists = CatalogItem.samples
+                          .any((item) => item.id == itemId);
+                      return exists ? null : '/catalog';
+                    },
+                    builder: (context, state) {
+                      final itemId = state.pathParameters['id']!;
+                      final item =
+                          state.extra as CatalogItem? ??
+                          CatalogItem.samples.firstWhereOrNull(
+                            (e) => e.id == itemId,
+                          );
+                      if (item == null) return const SizedBox.shrink();
+                      return CatalogItemScreen(item: item);
+                    },
                     routes: [
                       // Feature #10 & #12: Nested route + pop with result
                       GoRoute(

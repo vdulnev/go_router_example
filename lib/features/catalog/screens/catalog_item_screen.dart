@@ -8,10 +8,9 @@ import '../../../core/navigation/route_names.dart';
 /// The [CatalogItem] object was passed via `state.extra` when navigating here.
 /// Refreshing the page (deep link) loses `extra` because it's in-memory only.
 class CatalogItemScreen extends StatefulWidget {
-  final String itemId;
-  final CatalogItem? item;
+  final CatalogItem item;
 
-  const CatalogItemScreen({super.key, required this.itemId, this.item});
+  const CatalogItemScreen({super.key, required this.item});
 
   @override
   State<CatalogItemScreen> createState() => _CatalogItemScreenState();
@@ -20,39 +19,26 @@ class CatalogItemScreen extends StatefulWidget {
 class _CatalogItemScreenState extends State<CatalogItemScreen> {
   String? _reviewResult;
 
-  CatalogItem get _item =>
-      widget.item ??
-      CatalogItem.samples.firstWhere(
-        (e) => e.id == widget.itemId,
-        orElse: () => CatalogItem(
-          id: widget.itemId,
-          name: 'Item ${widget.itemId}',
-          description: 'Loaded by ID — extra was null (e.g. direct deep link).',
-          price: 0,
-          emoji: '📦',
-        ),
-      );
-
   @override
   Widget build(BuildContext context) {
     final state = GoRouterState.of(context);
     final extraPresent = state.extra != null;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_item.name)),
+      appBar: AppBar(title: Text(widget.item.name)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(_item.emoji, style: const TextStyle(fontSize: 64)),
+          Text(widget.item.emoji, style: const TextStyle(fontSize: 64)),
           const SizedBox(height: 12),
           Text(
-            _item.name,
+            widget.item.name,
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          Text(_item.description),
+          Text(widget.item.description),
           const SizedBox(height: 16),
           _InfoChip(
             label: 'Feature #8 — state.extra',
@@ -88,7 +74,7 @@ class _CatalogItemScreenState extends State<CatalogItemScreen> {
               // Feature 12: pop with result
               final result = await context.pushNamed<String>(
                 RouteNames.catalogReviews,
-                pathParameters: {'id': widget.itemId},
+                pathParameters: {'id': widget.item.id},
               );
               if (result != null && mounted) {
                 setState(() => _reviewResult = result);
